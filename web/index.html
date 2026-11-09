@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="一个简洁、专注内容的多轮 AI 对话界面。" />
+    <title>留白 · AI 对话</title>
+    <link rel="stylesheet" href="/static/style.css?v=20261108-scrollbar-edge" />
+    <script src="/static/app.js?v=20261108-session-rename" defer></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="sidebar">
+        <div class="brand" aria-label="留白对话"><span class="brand-mark" aria-hidden="true"></span><span>留白</span></div>
+        <button id="reset-button" class="new-chat-button" type="button">＋ 新对话</button>
+        <div class="history-heading"><span>历史对话</span><span id="session-count">0</span></div>
+        <nav id="session-list" class="session-list" aria-label="历史对话"></nav>
+      </aside>
+
+      <section class="chat-shell">
+        <header class="topbar"><span id="current-title">新对话</span></header>
+
+      <section id="conversation" class="conversation" aria-label="对话内容">
+        <div id="messages" class="messages" aria-live="polite"></div>
+        <div id="empty-state" class="empty-state">
+          <span class="empty-mark" aria-hidden="true"></span>
+          <h1>想聊些什么？</h1>
+          <p>输入一个问题，开始一段新的对话。</p>
+        </div>
+      </section>
+
+      <footer class="composer-wrap">
+        <form id="chat-form" class="composer">
+          <input id="image-input" class="image-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple aria-label="上传图片" />
+          <button id="upload-image-button" class="upload-image-button" type="button" aria-label="上传图片" title="上传图片">＋</button>
+          <textarea
+            id="message-input"
+            placeholder="输入消息…"
+            aria-label="输入消息"
+            rows="1"
+            autofocus
+          ></textarea>
+          <button id="send-button" class="send-button" type="submit" aria-label="发送消息" disabled>
+            <span aria-hidden="true">↑</span>
+          </button>
+        </form>
+        <div id="image-previews" class="image-previews" aria-live="polite"></div>
+        <p class="hint">Enter 发送 · Shift + Enter 换行 · 可粘贴图片</p>
+      </footer>
+      </section>
+
+      <aside class="settings-sidebar" aria-label="接口设置">
+        <div class="settings-heading"><span class="settings-dot"></span><span>接口设置</span></div>
+        <label class="field-label" for="profile-select">调用分组</label>
+        <select id="profile-select" class="field-control"></select>
+        <button id="manage-profiles" class="manage-profiles" type="button">管理分组 · 新建 / 导入</button>
+        <label class="local-switch"><input id="local-enabled" type="checkbox" /><span class="switch-track"><span></span></span><span>使用本地模型</span></label>
+        <label class="field-label local-only" for="local-model-path">本地模型路径</label>
+        <input id="local-model-path" class="field-control local-only" type="text" placeholder="F:\\AAA model\\Qwen3___5-9B" />
+        <label class="field-label" for="provider-format">接口格式</label>
+        <select id="provider-format" class="field-control">
+          <option value="anthropic">Anthropic Messages</option>
+          <option value="openai">OpenAI Chat Completions</option>
+        </select>
+        <label class="field-label" for="base-url">Base URL</label>
+        <input id="base-url" class="field-control" type="url" placeholder="https://api.anthropic.com" />
+        <label class="field-label" for="model-name">模型</label>
+        <input id="model-name" class="field-control" type="text" placeholder="模型名称" />
+        <label class="field-label" for="api-key">API Key</label>
+        <input id="api-key" class="field-control" type="password" autocomplete="new-password" placeholder="留空则保持当前 Key" />
+        <div class="thinking-label"><label>思考强度</label><output id="thinking-value">medium</output></div>
+        <div id="thinking-level" class="thinking-options" role="group" aria-label="思考强度">
+          <button type="button" data-level="low">low</button>
+          <button type="button" data-level="medium" class="selected">medium</button>
+          <button type="button" data-level="high">high</button>
+        </div>
+        <button id="save-settings" class="save-settings" type="button">保存设置</button>
+        <p id="settings-status" class="settings-status" role="status"></p>
+        <p class="settings-note">设置会保存在本地数据库。API Key 仅显示掩码。</p>
+        <div class="jump-heading"><span>本会话消息</span><span id="jump-count">0</span></div>
+        <nav id="jump-list" class="jump-list" aria-label="本会话消息导航"></nav>
+      </aside>
+    </main>
+    <dialog id="profiles-dialog" class="profiles-dialog" aria-labelledby="profiles-dialog-title">
+      <div class="dialog-header">
+        <div><h2 id="profiles-dialog-title">管理调用分组</h2><p>保存多套 API Key 与模型，切换时 Base URL 保持不变。</p></div>
+        <button id="close-profiles" class="dialog-close" type="button" aria-label="关闭">×</button>
+      </div>
+      <form id="profile-form" class="profile-form">
+        <h3>新建分组</h3>
+        <label class="field-label" for="profile-name">分组名称</label>
+        <input id="profile-name" class="field-control" type="text" maxlength="80" placeholder="例如：工作账号" required />
+        <label class="field-label" for="profile-model">模型</label>
+        <input id="profile-model" class="field-control" type="text" maxlength="160" placeholder="模型名称" required />
+        <label class="field-label" for="profile-key">API Key</label>
+        <input id="profile-key" class="field-control" type="password" maxlength="500" autocomplete="new-password" placeholder="输入新分组的密钥" required />
+        <button id="add-profile" class="dialog-primary" type="submit">保存并切换</button>
+      </form>
+      <div class="profile-import">
+        <h3>批量导入</h3>
+        <p>直接粘贴 JSON，或选择 JSON 文件。内容为包含 name、api_key、model 的数组。</p>
+        <label class="field-label" for="profile-json">粘贴 JSON</label>
+        <textarea id="profile-json" class="field-control profile-json" rows="5" spellcheck="false" placeholder='[{"name":"工作账号","api_key":"sk-...","model":"模型名"}]'></textarea>
+        <div class="import-actions">
+          <button id="import-pasted-profiles" class="dialog-secondary" type="button">导入粘贴内容</button>
+          <button id="import-profiles" class="dialog-secondary" type="button">选择 JSON 文件</button>
+        </div>
+        <input id="profile-file" type="file" accept="application/json,.json" hidden />
+      </div>
+      <div class="dialog-footer">
+        <button id="delete-profile" class="dialog-delete" type="button">删除当前分组</button>
+        <span id="profile-status" role="status"></span>
+      </div>
+    </dialog>
+  </body>
+</html>
